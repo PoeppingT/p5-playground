@@ -180,7 +180,8 @@ class Trail {
       let second = (i > 0) ? this.queue.get(i-1) : this.queue.get(i);
       let third = this.queue.get(i);
       let fourth = (i == this.queue.length() - 1) ? this.queue.get(i) : this.queue.get(i+1);
-      drawCurve(first, second, third, fourth, i, i / this.queue.length());
+      //drawCurve(first, second, third, fourth, i, i / this.queue.length());
+      drawCurve(first, second, third, fourth, frameCount * 0.001, i / this.queue.length());
     }
   }
 
@@ -220,14 +221,14 @@ function drawCurve(v1, v2, v3, v4, i, transparency = 1) {
 
 let segments;
 let trail;
-const maxTrailSize = 2500;
+const maxTrailSize = 1000;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   colorMode(HSB);
   segments = new Segments(new Vector(windowWidth / 2, windowHeight / 2));
   trail = new Trail(maxTrailSize);
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 200; i++) {
     segments.addSegment(80 * (1/(i + 1)), (0.25+i) * 0.03);
   }
 }
