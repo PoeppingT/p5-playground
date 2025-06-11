@@ -75,6 +75,11 @@ class Segments {
     }
   }
 
+  getEndpoint() {
+    let endpoint = this.segments[this.segments.length - 1].line.movable;
+    return new Vector(endpoint.x, endpoint.y);
+  }
+
   process() {
     for (let i = 0; i < this.segments.length; i++) {
       let segment = this.segments[i];
@@ -112,30 +117,117 @@ class Segments {
     return `Segments ${this.segments}`
   }
 }
+class FixedQueue {
+  constructor(size) {
+    this.size = size;
+    this._queue = [];
+  }
+
+  poll() {
+    return this._queue.shift();
+  }
+
+  push(o) {
+    this._queue.push(o);
+    if (this._queue.length > this.size) {
+      this.poll(); // discard
+    }
+  }
+
+  length() {
+    return this._queue.length;
+  }
+
+  get(i) {
+    return this._queue[i];
+  }
+
+  *[Symbol.iterator]() {
+    return this._queue;
+  }
+
+  toString() {
+    return `FixedQueue of ${this.size}: ${this._queue}`
+  }
+}
+class Trail {
+  constructor(size) {
+    this.queue = new FixedQueue(size);
+  }
+
+  add(point) {
+    this.queue.push(point);
+  }
+
+  drawWithCircles() {
+    for (let i = 0; i < this.queue.length(); i++) {
+      let p = this.queue.get(i);
+      drawPoint(p, i, i / this.queue.length());
+    }
+  }
+
+  drawWithLines() {
+    for (let i = 0; i < this.queue.length(); i++) {
+      if (i != 0) {
+        drawLine(new Line(this.queue.get(i-1), this.queue.get(i)), i, i / this.queue.length());
+      }
+    }
+  }
+
+  drawWithCurves() {
+    for (let i = 0; i < this.queue.length(); i++) {
+      let first = (i > 1) ? this.queue.get(i-2) : (i == 0) ? this.queue.get(i) : this.queue.get(i-1);
+      let second = (i > 0) ? this.queue.get(i-1) : this.queue.get(i);
+      let third = this.queue.get(i);
+      let fourth = (i == this.queue.length() - 1) ? this.queue.get(i) : this.queue.get(i+1);
+      drawCurve(first, second, third, fourth, i, i / this.queue.length());
+    }
+  }
+
+  draw() {
+    // this.drawWithCircles();
+    // this.drawWithLines();
+    this.drawWithCurves();
+  }
+
+  toString() {
+    return `Trail ${this.queue}`;
+  }
+}
 
 function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
-function drawLine(lineToDraw, i) {
+function drawPoint(point, i, transparency) {
+  strokeWeight(0);
+  fill((100 * (i + 1)) % 360, 100, 100, transparency);
+  circle(point.x, point.y, 2);
+}
+
+function drawLine(lineToDraw, i, transparency = 1) {
   strokeWeight(3);
-  stroke((100 * (i + 1)) % 360, 100, 100);
+  stroke((100 * (i + 1)) % 360, 100, 100, transparency);
   line(lineToDraw.fixed.x, lineToDraw.fixed.y, lineToDraw.movable.x, lineToDraw.movable.y);
 }
 
-function drawCurve(v1, v2, v3, v4, i) {
+function drawCurve(v1, v2, v3, v4, i, transparency = 1) {
+  noFill();
   strokeWeight(3);
   stroke((100 * (i + 1)) % 360, 100, 100);
   curve(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v4.x, v4.y);
 }
 
 let segments;
+let trail;
+const maxTrailSize = 2500;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   colorMode(HSB);
   segments = new Segments(new Vector(windowWidth / 2, windowHeight / 2));
-  for (let i = 0; i < 200; i++) {
+  trail = new Trail(maxTrailSize);
+  for (let i = 0; i < 50; i++) {
     segments.addSegment(80 * (1/(i + 1)), (0.25+i) * 0.03);
   }
 }
@@ -143,5 +235,7 @@ function setup() {
 function draw() {
   clear();
   segments.process();
+  trail.add(segments.getEndpoint());
   segments.draw();
+  trail.draw();
 }
