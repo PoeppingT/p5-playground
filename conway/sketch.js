@@ -1,4 +1,4 @@
-const boxSize = 5;
+const boxSize = 4;
 const SPACEBAR = 32;
 const canvasScaleDown = 15;
 let targetFramerate = 5;
@@ -20,7 +20,7 @@ function setup() {
   frameRate(targetFramerate);
 
   initWorlds();
-  randomBlinkers((windowWidth - canvasScaleDown) * 3);
+  randomBlinkers((windowWidth - canvasScaleDown) * (10-boxSize));
   drawEntireWorld();
 }
 
@@ -142,20 +142,10 @@ function drawBox(i, j, val) {
 }
 
 function drawEntireWorld() {
-  if (simulating) {
-    strokeWeight(0);
-  } else {
-    strokeWeight(1);
-  }
   iterateMatrix(currentWorld, drawBox);
 }
 
 function drawUpdated() {
-  if (simulating) {
-    strokeWeight(0);
-  } else {
-    strokeWeight(1);
-  }
   for ([x,y] of updated) {
     drawBox(x, y, currentWorld[x][y])
   }
