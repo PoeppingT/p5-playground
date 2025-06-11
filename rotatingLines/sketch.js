@@ -87,14 +87,25 @@ class Segments {
     }
   }
 
-  draw() {
+  drawWithLines() {
     for (let i = 0; i < this.segments.length; i++) {
-      if (printing > 0) {
-        console.log(`drawing ${this.segments[i].line}`);
-        printing--;
-      }
       drawLine(this.segments[i].line, i);
     }
+  }
+
+  drawWithCurves() {
+    for (let i = 0; i < this.segments.length; i++) {
+      // I want to draw my curves with 4 points
+      // let's do the previous line's fixed, my line's fixed and movable, and the next line's movable
+      let previousFixed = (i == 0) ? this.segments[i].line.fixed : this.segments[i-1].line.fixed;
+      let nextMovable = (i == this.segments.length - 1) ? this.segments[i].line.movable : this.segments[i+1].line.movable;
+      drawCurve(previousFixed, this.segments[i].line.fixed, this.segments[i].line.movable, nextMovable, i);
+    }
+  }
+
+  draw() {
+    // this.drawWithLines();
+    this.drawWithCurves();
   }
 
   toString() {
@@ -108,21 +119,25 @@ function randomInt(min, max) {
 
 function drawLine(lineToDraw, i) {
   strokeWeight(3);
-  stroke(100 * (i + 1), 100, 100);
+  stroke((100 * (i + 1)) % 360, 100, 100);
   line(lineToDraw.fixed.x, lineToDraw.fixed.y, lineToDraw.movable.x, lineToDraw.movable.y);
 }
 
+function drawCurve(v1, v2, v3, v4, i) {
+  strokeWeight(3);
+  stroke((100 * (i + 1)) % 360, 100, 100);
+  curve(v1.x, v1.y, v2.x, v2.y, v3.x, v3.y, v4.x, v4.y);
+}
+
 let segments;
-let printing = 10;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   colorMode(HSB);
   segments = new Segments(new Vector(windowWidth / 2, windowHeight / 2));
-  for (let i = 0; i < 2 ; i++) {
-    segments.addSegment(100, (1+i) * 0.01);
+  for (let i = 0; i < 200; i++) {
+    segments.addSegment(80 * (1/(i + 1)), (0.25+i) * 0.03);
   }
-  console.log(`created segments: ${segments}`);
 }
 
 function draw() {
