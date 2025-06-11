@@ -34,6 +34,10 @@ let curveHue = 0;
 let curves = []
 const trailSize = 5000;
 let trail = new FixedQueue(trailSize);
+let lineDrawStrategyIndex = 0;
+const lineDrawStrategies = 3;
+let lineDrawStrategy = drawTrailOfCircles;
+const SPACEBAR = 32;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -69,10 +73,21 @@ function getPointOnCurve(curvePoints, t) {
 }
 
 function drawPoint(point, color) {
-  // stroke(0, 0, 0);
   strokeWeight(0);
   fill(color);
   circle(point.posX, point.posY, 5);
+}
+
+function drawLine(point1, point2, color) {
+  strokeWeight(2);
+  stroke(color);
+  line(point1.posX, point1.posY, point2.posX, point2.posY);
+}
+
+function drawSmallCurve(point1, point2, point3, point4, color) {
+  strokeWeight(2);
+  stroke(color);
+  curve(point1.posX, point1.posY, point2.posX, point2.posY, point3.posX, point3.posY, point4.posX, point4.posY);
 }
 
 function movePoint(point) {
@@ -114,10 +129,34 @@ function transparency(i) {
   return linear(i);
 }
 
-function drawTrail() {
+function drawTrailOfCircles() {
   for (let i = 0; i < trail._queue.length; i++) {
     let p = trail._queue[i];
     drawPoint(p, color(i % 360, 80, 80, transparency(i)));
+  }
+}
+
+function drawTrailOfLines() {
+  for (let i = 0; i < trail._queue.length; i++) {
+    if (i != 0) {
+      drawLine(trail._queue[i-1], trail._queue[i], color(i % 360, 80, 80, transparency(i)));
+    }
+  }
+}
+
+function drawTrailOfCurves() {
+  for (let i = 0; i < trail._queue.length; i++) {
+    if (i <= 1) {
+      if (i == 1) {
+        drawSmallCurve(trail._queue[i-1], trail._queue[i-1], trail._queue[i], trail._queue[i+1], color(i % 360, 80, 80, transparency(i)));
+      } else {
+        drawSmallCurve(trail._queue[i], trail._queue[i], trail._queue[i], trail._queue[i+1], color(i % 360, 80, 80, transparency(i)));
+      }
+    } else if (i == trail._queue.length - 1) {
+      drawSmallCurve(trail._queue[i-2], trail._queue[i-1], trail._queue[i], trail._queue[i], color(i % 360, 80, 80, transparency(i)));
+    } else {
+      drawSmallCurve(trail._queue[i-2], trail._queue[i-1], trail._queue[i], trail._queue[i+1], color(i % 360, 80, 80, transparency(i)));
+    }
   }
 }
 
@@ -126,12 +165,37 @@ function sinWave(min, max, t) {
   return factor * sin(t) + (min + factor);
 }
 
+function keyPressed() {
+  if (keyCode === SPACEBAR) {
+    lineDrawStrategyIndex = (lineDrawStrategyIndex + 1) % lineDrawStrategies;
+    switch(lineDrawStrategyIndex) {
+      case 0: {
+        lineDrawStrategy = drawTrailOfCircles;
+        console.log("drawing trail with circles");
+        break;
+      }
+      case 1: {
+        lineDrawStrategy = drawTrailOfLines;
+        console.log("drawing trail with lines");
+        break;
+      }
+      case 2: {
+        lineDrawStrategy = drawTrailOfCurves;
+        console.log("drawing trail with curves");
+        break;
+      }
+    }
+  }
+}
+
 function draw() {
   clear();
 
   for (c of curves) {
     trail.push(getPointOnCurve(c, sinWave(0, 1, 0.01 * frameCount)));
-    drawTrail();
+    lineDrawStrategy();
+    // drawTrailOfLines();
+    // drawTrailOfCurves();
     // drawCurve(c);
     // drawPointOnCurve(c, t);
     for (p of c) {
